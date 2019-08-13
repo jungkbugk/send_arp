@@ -11,10 +11,10 @@ void usage() {
 
 int main(int argc, char *argv[])
 {
-    argc=4;
-    argv[1]="eth0";
-    argv[2]="10.0.1.15";
-    argv[3]="10.0.1.1";
+    //argc=4;
+    //argv[1]="eth0";
+    //argv[2]="10.0.1.15";
+    //argv[3]="10.0.1.1";
 
     if (argc != 4) {
         usage();
