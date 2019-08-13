@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include <pcap.h>
 
 #include <net/if.h>

